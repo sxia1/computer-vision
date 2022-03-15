@@ -26,7 +26,7 @@ using namespace ComputerVisionProjects;
  *  and the value is a struct of all the object attributes
  * @param filename this is the name of the file that will be written to
  */
-void WriteStats(map<int, struct object_data> objects, string filename){
+void WriteStats(Image *an_image, map<int, struct object_data> objects, string filename){
   ofstream database;
   database.open(filename);
   for(const auto& obj: objects){
