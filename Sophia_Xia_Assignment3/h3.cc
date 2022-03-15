@@ -2,7 +2,6 @@
 // Reads a given pgm image, draws a line, and saves it to
 // another pgm image.
 #include "image.h"
-#include "bucket.h"
 #include <cstdio>
 #include <cmath>
 #include <iostream>

@@ -36,13 +36,13 @@ $(PROGRAM_2): $(ALL_OBJ2)
 	g++ $(C++FLAG) -o $(EXEC_DIR)/$@ $(ALL_OBJ2) $(INCLUDES) $(LIBS_ALL)
 
 # h3
-ALL_OBJ3 = image.o h3.o bucket.h
+ALL_OBJ3 = image.o h3.o
 PROGRAM_3 = h3
 $(PROGRAM_3): $(ALL_OBJ3)
 	g++ $(C++FLAG) -o $(EXEC_DIR)/$@ $(ALL_OBJ3) $(INCLUDES) $(LIBS_ALL)
 
 # h4
-ALL_OBJ4 = image.o h4.o bucket.h
+ALL_OBJ4 = image.o h4.o
 PROGRAM_4 = h4
 $(PROGRAM_4): $(ALL_OBJ4)
 	g++ $(C++FLAG) -o $(EXEC_DIR)/$@ $(ALL_OBJ4) $(INCLUDES) $(LIBS_ALL)
