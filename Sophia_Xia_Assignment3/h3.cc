@@ -45,63 +45,33 @@ Image *Accumulator(const Image *an_image, int rho_sample, double theta_sample){
   return HoughImage;
 }
 
-vector<struct bucket> localMaxima(const Image *hough_image, int rho_sample, double theta_sample, int bucket_size){
+Image *BucketedImage(const Image *hough_image, int bucket_size){
   if (hough_image == nullptr) abort();
   int hough_rows = hough_image->num_rows();
   int hough_cols = hough_image->num_columns();
 
-  vector<struct bucket> vote_array;
+  Image *Bucketed = new Image();
+  Bucketed->AllocateSpaceAndSetSize(hough_rows/bucket_size, hough_cols/bucket_size);
+  int max_vote = 0;
   for (int r = 0; r < hough_rows; r += bucket_size){
-    bucket previous_bucket;
-    int previous_votes = 0;
-    bool up = false;
     for (int c = 0; c < hough_cols; c += bucket_size){
-      bucket current_bucket;
+      int total_bucket_votes = 0;
       int bucket_rows = min(r + bucket_size, hough_rows); 
       int bucket_cols = min(c + bucket_size, hough_cols);
-      current_bucket.rows = bucket_rows - r;
-      current_bucket.cols = bucket_cols - c;
-      int curr_votes = 0;
+      int bucket_row = bucket_rows/bucket_size -1;
+      int bucket_col = bucket_cols/bucket_size -1;
       //BUCKET
       for(int br = r; br < bucket_rows; br ++){
         for(int bc = c; bc < bucket_cols; bc ++){
-          int votes = hough_image->GetPixel(br,bc);
-          bucket_pixel pixel;
-          pixel.votes = votes;
-          pixel.rho = br*rho_sample;
-          pixel.theta = bc*theta_sample;
-          current_bucket.bucket_pixels.push_back(pixel);
-          curr_votes = max(votes, curr_votes);
+          total_bucket_votes += hough_image->GetPixel(br,bc);
         }
       }
-      // 50 threshold as preliminary screen
-      if(up && curr_votes < previous_votes && previous_votes > 50){
-        vote_array.push_back(previous_bucket);
-        up = false;
-      }
-      if(!up && curr_votes > previous_votes) up = true;
-      previous_votes = curr_votes;
-      previous_bucket = current_bucket;
+      Bucketed->SetPixel(bucket_row, bucket_col, total_bucket_votes);
+      max_vote = max(max_vote, total_bucket_votes);
     }
   }
-  return vote_array;
-}
-
-void writeArrayToFile(vector<struct bucket> vote_array, string filename){
-  ofstream database;
-  database.open(filename);
-  for(int i = 0; i < vote_array.size(); i += 2){
-    database << vote_array[i].rows << " ";
-    database << vote_array[i].cols << " ";
-    database << "\n";
-    for(int j = 0; j < vote_array[i].bucket_pixels.size(); j++){
-      database << vote_array[i].bucket_pixels[j].votes << " ";
-      database << vote_array[i].bucket_pixels[j].rho << " ";
-      database << vote_array[i].bucket_pixels[j].theta << " ";
-      database << "\n";
-    }
-  }
-  database.close();
+  Bucketed->SetNumberGrayLevels(max_vote);
+  return Bucketed;
 }
 
 int main(int argc, char **argv){
@@ -119,13 +89,17 @@ int main(int argc, char **argv){
     cout <<"Can't open file " << input_file << endl;
     return 0;
   }
-
+  
+  int bucket_size = 1;
   Image *hough_image = Accumulator(&an_image, 1, M_PI/180);
-  vector<struct bucket> voting_array = localMaxima(hough_image, 1, M_PI/180, 25);
-  writeArrayToFile(voting_array, output_voting_file);
+  Image *bucket_image = BucketedImage(hough_image, bucket_size);
 
   if (!WriteImage(output_image_file, *hough_image)){
     cout << "Can't write to file " << output_image_file << endl;
+    return 0;
+  }
+  if (!WriteImage(output_voting_file, *bucket_image)){
+    cout << "Can't write to file " << output_voting_file << endl;
     return 0;
   }
 }
