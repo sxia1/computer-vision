@@ -14,6 +14,7 @@
 using namespace std;
 using namespace ComputerVisionProjects;
 
+// component struct keeps track of component center and number of votes
 struct component{
   component(): r(0), c(0), votes(0){}
   int r;
@@ -40,10 +41,19 @@ set<int> GetLabels(const Image *an_image){
   return labels; 
 }
 
-// Implements the Bresenham's incremental midpoint algorithm;
-// (adapted from J.D.Foley, A. van Dam, S.K.Feiner, J.F.Hughes
-// "Computer Graphics. Principles and practice", 
-// 2nd ed., 1990, section 3.2.2);  
+/**
+ * calculates and returns all discrete points on a line between the given coordinates
+ * Modified from the given code in Image.cc that does the following:
+ *   - Implements the Bresenham's incremental midpoint algorithm;
+ *   - (adapted from J.D.Foley, A. van Dam, S.K.Feiner, J.F.Hughes
+ *   - "Computer Graphics. Principles and practice", 
+ *   - 2nd ed., 1990, section 3.2.2);
+ * @param x0 x coordinate of first coordinate pair
+ * @param y0 y coordinate of first coordinate pair
+ * @param x1 x coordinate of second coordinate pair
+ * @param y1 y coordinate of second coordinate pair
+ * @return vector<int> contains all points on the line in the form of {x0, y0, x1, y1, ... , xn, yn} 
+*/
 vector<int> GetLinePoints(int x0, int y0, int x1, int y1) {  
   #ifdef SWAP
   #undef SWAP
@@ -185,7 +195,12 @@ vector<int> GetLinePoints(int x0, int y0, int x1, int y1) {
   return points;
 }
 
-
+/**
+ * calculates and returns the center (hough line rho theta pair) of the connected components in the hough image
+ * @param an_image reference to the hough image containing hough lines
+ * @param components reference to the image containing the labeled connected components
+ * @return vector<int> vector of rho theta coordinate pairs {rho_0, theta_0, rho_1, theta_1 ... rho_n, theta_n} 
+*/
 vector<double> FindHoughLines(const Image *hough_image, const Image *components){
   if (hough_image == nullptr || components == nullptr) abort();
   int rows = hough_image->num_rows();
@@ -219,6 +234,11 @@ vector<double> FindHoughLines(const Image *hough_image, const Image *components)
   return hough_lines;
 }
 
+/**
+ * Modifies an image by making it binary based on a threshold
+ * @param an_image reference to the image which gets modified
+ * @param threshold
+ */
 void AboveThreshold(Image *an_image, int threshold){
   if (an_image == nullptr) abort();
   int rows = an_image->num_rows();
@@ -234,7 +254,8 @@ void AboveThreshold(Image *an_image, int threshold){
 }
 
 /**
- * Modifies an image by finding and labeling the connected components
+ * Modifies a binary image by finding and labeling the connected components
+ * adapted from my assignment 2 p2.cc code
  * @param an_image reference to the image which gets modified
  */
 void ConnectedComponents(Image *an_image){
@@ -293,6 +314,13 @@ void ConnectedComponents(Image *an_image){
   }
 }
 
+/**
+ * calculates cartesian end points of a line within the given bounds from the polar coordinates given
+ * @param rows upper bound of the x-value for the line (lower bound is understood to be 0)
+ * @param cols upper bound of the y-value for the line (lower bound is understood to be 0)
+ * @param rho first element of polar coordinate pair
+ * @param theta second element of polar coordinate pair
+ */
 vector<int> PolarToCartesian(int rows, int cols, double rho, double theta){
   vector<int> coords;
   int x, y;
@@ -339,7 +367,6 @@ void DrawTrimmedHoughLines(Image *an_image, Image *edge_image, vector<double> ho
   if (an_image == nullptr) abort();
   int rows = an_image->num_rows();
   int cols = an_image->num_columns();
-  //vector<int> segments;
   for(int i = 0; i < houghlines.size(); i += 2){
     double rho = houghlines[i];
     double theta = houghlines[i+1];
@@ -353,7 +380,6 @@ void DrawTrimmedHoughLines(Image *an_image, Image *edge_image, vector<double> ho
       int line_length = 0;
       int gap = 0;
       for(int j = 0; j < points.size(); j += 2){
-        //cout << x0 << " " << y0 << " " << x1 << " " << y1 << " " << endl;
         int color = edge_image->GetPixel(points[j],points[j+1]);
         if(color == 255){
           if(x0 == -1){
@@ -375,10 +401,6 @@ void DrawTrimmedHoughLines(Image *an_image, Image *edge_image, vector<double> ho
           if(x0 != -1) gap ++;
           if(gap > gap_tolerance){
             if(line_length > min_length){
-              //segments.push_back(x0);
-              //segments.push_back(y0);
-              //segments.push_back(x1);
-              //segments.push_back(y1);
               DrawLine(x0, y0, x1, y1, 255, an_image);
             }
             x0 = -1;
@@ -391,7 +413,6 @@ void DrawTrimmedHoughLines(Image *an_image, Image *edge_image, vector<double> ho
         }
       }
     }
-    //if(coords.size() == 4) DrawLine(coords[0], coords[1], coords[2], coords[3], 255, an_image);
   }
 }
 
