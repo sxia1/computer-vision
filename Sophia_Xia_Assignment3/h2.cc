@@ -1,6 +1,9 @@
-// Sample test file for the image class.
-// Reads a given pgm image, draws a line, and saves it to
-// another pgm image.
+// Sophia Xia
+// contains function for applying Binary Threshold to an image
+// Reads a given pgm image, and applies binary threshold with the given threshold
+// The modified image is then saved to a new pgm image under the given filename
+// Code from previous assignment's p1 was reused
+
 #include "image.h"
 #include <cstdio>
 #include <iostream>

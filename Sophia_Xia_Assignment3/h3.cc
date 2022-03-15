@@ -1,6 +1,8 @@
-// Sample test file for the image class.
-// Reads a given pgm image, draws a line, and saves it to
-// another pgm image.
+// Sophia Xia
+// contains functions for calculating the hough space given the image space
+// Reads a given pgm image (with edge detection and thresholding already applied), and creates a hough space image along with a bucketed/binned version (lower resolution) of the image
+// The hough image and bucketed hough image are then written to new pgm images under the given filenames
+
 #include "image.h"
 #include <cstdio>
 #include <cmath>
@@ -12,6 +14,12 @@
 using namespace std;
 using namespace ComputerVisionProjects;
 
+/**
+ * given an image, it calculates and return the hough space image
+ * @param an_image reference to the image which gets modified
+ * @param rho_sample the rho step, how much rho should increment
+ * @param theta_sample the theta step, how much theta should increment
+ */
 Image *Accumulator(const Image *an_image, int rho_sample, double theta_sample){
   if (an_image == nullptr) abort();
   int rows = an_image->num_rows();
@@ -44,6 +52,13 @@ Image *Accumulator(const Image *an_image, int rho_sample, double theta_sample){
   return HoughImage;
 }
 
+/**
+ * given a hough image, return bucketed/binned lower resolution version
+ * @param an_image reference to the image which gets modified
+ * @param bucket_size determines height and width of bucket
+ *        - from testing, leaving out this function or just setting bucket_size to 1 is best
+ *        - values larger than 1 may lead to inaccurate results down the line
+ */
 Image *BucketedImage(const Image *hough_image, int bucket_size){
   if (hough_image == nullptr) abort();
   int hough_rows = hough_image->num_rows();
