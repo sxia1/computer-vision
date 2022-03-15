@@ -56,7 +56,7 @@ bool ReadImage(const string &filename, Image *an_image) {
     cout << "ReadImage: Cannot open file" << endl;
     return false;
   }
-  
+
   // Check for the right "magic number".
   char line[1024];
   if (fread(line, 1, 3, input) != 3 || strncmp(line,"P5\n",3)) {
@@ -64,17 +64,17 @@ bool ReadImage(const string &filename, Image *an_image) {
     cout << "ReadImage: Expected .pgm file" << endl;
     return false;
   }
-  
+
   // Skip comments.
   do
     fgets(line, sizeof line, input);
   while(*line == '#');
-  
+
   // Read the width and height.
   int num_columns,num_rows;
   sscanf(line,"%d %d\n", &num_columns, &num_rows);
   an_image->AllocateSpaceAndSetSize(num_rows, num_columns);
-  
+
 
   // Read # of gray levels.
   fgets(line, sizeof line, input);
@@ -94,7 +94,7 @@ bool ReadImage(const string &filename, Image *an_image) {
       an_image->SetPixel(i, j, byte);
     }
   }
-  
+
   fclose(input);
   return true; 
 }
@@ -118,9 +118,9 @@ bool WriteImage(const string &filename, const Image &an_image) {
     for (int j = 0; j < num_columns; ++j) {
       const int byte = an_image.GetPixel(i , j);
       if (fputc(byte,output) == EOF) {
-	    fclose(output);
-            cout << "WriteImage: could not write" << endl;
-	    return false;
+        fclose(output);
+        cout << "WriteImage: could not write" << endl;
+        return false;
       }
     }
   }
@@ -134,7 +134,7 @@ bool WriteImage(const string &filename, const Image &an_image) {
 // "Computer Graphics. Principles and practice", 
 // 2nd ed., 1990, section 3.2.2);  
 void DrawLine(int x0, int y0, int x1, int y1, int color,
-	      Image *an_image) {  
+    Image *an_image) {  
   if (an_image == nullptr) abort();
 
 #ifdef SWAP
@@ -144,23 +144,23 @@ void DrawLine(int x0, int y0, int x1, int y1, int color,
 
   const int DIR_X = 0;
   const int DIR_Y = 1;
-  
+
   // Increments: East, North-East, South, South-East, North.
   int incrE,
-    incrNE,
-    incrS,
-    incrSE,
-    incrN;     
+      incrNE,
+      incrS,
+      incrSE,
+      incrN;     
   int d;         /* the D */
   int x,y;       /* running coordinates */
   int mpCase;    /* midpoint algorithm's case */
   int done;      /* set to 1 when done */
-  
+
   int xmin = x0;
   int xmax = x1;
   int ymin = y0;
   int ymax = y1;
-  
+
   int dx = xmax - xmin;
   int dy = ymax - ymin;
   int dir;
@@ -206,7 +206,7 @@ void DrawLine(int x0, int y0, int x1, int y1, int color,
     incrE = 2 * dx;
     incrSE = 2 * (dx + dy);
   }
-  
+
   /// Start the scan.
   x = xmin;
   y = ymin;
@@ -214,69 +214,69 @@ void DrawLine(int x0, int y0, int x1, int y1, int color,
 
   while (!done) {
     an_image->SetPixel(x,y,color);
-  
+
     // Move to the next point.
     switch(dir) {
-    case DIR_X: 
-      if (x < xmax) {
-	      switch(mpCase) {
-	      case 1:
-		if (d <= 0) {
-		  d += incrE;  
-		  x++;
-		} else {
-		  d += incrNE; 
-		  x++; 
-		  y++;
-		}
-		break;
-  
+      case DIR_X: 
+        if (x < xmax) {
+          switch(mpCase) {
+            case 1:
+              if (d <= 0) {
+                d += incrE;  
+                x++;
+              } else {
+                d += incrNE; 
+                x++; 
+                y++;
+              }
+              break;
+
             case 2:
               if (d <= 0) {
                 d += incrSE; 
-		x++; 
-		y--;
+                x++; 
+                y--;
               } else {
                 d += incrE;  
-		x++;
+                x++;
               }
-	      break;
-	      } 
-      } else {
-	done=1;
-      }     
-      break;
+              break;
+          } 
+        } else {
+          done=1;
+        }     
+        break;
 
-    case DIR_Y: 
+      case DIR_Y: 
         if (y < ymax) {
           switch(mpCase) {
-	  case 1:
-	    if (d <= 0) {
-	      d += incrE;  
-	      y++;
-	    } else {
-	      d += incrNE; 
-	      y++; 
-	      x++;
-	    }
-            break;
-  
-	  case 2:
-	    if (d <= 0) {
+            case 1:
+              if (d <= 0) {
+                d += incrE;  
+                y++;
+              } else {
+                d += incrNE; 
+                y++; 
+                x++;
+              }
+              break;
+
+            case 2:
+              if (d <= 0) {
                 d += incrSE; 
-		y++; 
-		x--;
+                y++; 
+                x--;
               } else {
                 d += incrE;  
-		y++;
-	    }
-            break;
-	  } // mpCase
+                y++;
+              }
+              break;
+          } // mpCase
         } // y < ymin 
         else {
-	  done=1;
-	}
-	break;    
+          done=1;
+        }
+        break;    
     }
   }
 }
