@@ -2,38 +2,36 @@ Sophia Xia
 
 Which Parts of the Assignment were Completed:
 
- - p1: COMPLETED
- - p2: COMPLETED
- - p3: COMPLETED
- - p4: COMPLETED
-
-Bugs Encountered:
-
-  - the colors of the labeled connected components don't turn out quite right
-    - when run on the image with only 2 objects, one object is white while the other is gray
-    - when run on the image with multiple objects, one object should be white but this is not the case
-  - I later adjusted the color scale so that white would not be an option
-    - this is because I draw my orientation lines in white
-      - but I'm still not sure what happened with my original color algorithm
+ - h1: COMPLETED
+ - h2: COMPLETED
+ - h3: COMPLETED
+ - h4: COMPLETED
+ - Extra Credit: COMPLETED
 
 Instructions to Run:
 
-p1:
-$ make p1; ./p1 <input_image.pgm> <threshold> <output_filename.pgm>
-  - replace threshold with a number between 0 and 255
-  - I used 125 as the threshold as that worked well for me
-  - output is binarized version of input image
+h1:
+$ make h1; ./h1 <input_image.pgm> <output_filename.pgm>
+  - output is the input image with Sobel 3x3 mask applied
 
-p2:
-$ make p2; ./p2 <binary_image.pgm> <output_filename.pgm>
-  - output is image with labeled connected components
+h2:
+$ make h2; ./h2 <edge_image.pgm> <threshold> <output_filename.pgm>
+  - the output is the binary version of the edge image provided
 
-p3:
-$ make p3; ./p3 <labeled_connected_components_image.pgm> <output_database.txt> <output_filename.pgm>
-  - the database output is a plain text file with the object attributes on each line
-  - output is image with dots drawn at the center of the objects with an orientation line emanating from the center
+h3:
+$ make h3; ./h3 <binary_edge_image.pgm> <output_hough.pgm> <output_voting_array.pgm>
+  - outputs are the hough image space and a binned version of the hough image space (the voting array)
+  - I found that the binning lead to very inaccurate results down the line so I just left the bucket size at 1
+    - this means that the two outputs are actually the same
 
-p4:
-$ make p4; ./p4 <labeled_connected_components_image.pgm> <database.txt> <output_filename.pgm>
-  - output is image with dots drawn at the center of the objects with an orientation line emanating from the center
-    - they are only drawn on the objects that were recognized
+h4:
+$ make h4; ./h4 <orig_input_image.pgm> <voting_array.pgm> <threshold> <output_filename.pgm> <optional_binary_edge_image.pgm>
+  - output is a original image with Hough lines drawn on it
+  - if optional binary edge image is provided, trimmed Hough Lines will be drawn instead
+
+Thresholds used:
+Binary Edge Threshold: 110
+Vote Threshold:
+  - hough_simple_1.pgm: 160
+  - hough_simple_2.pgm: 120
+  - hough_complex_1.pgm: 100
