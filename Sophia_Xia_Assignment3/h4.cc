@@ -1,6 +1,11 @@
-// Sample test file for the image class.
-// Reads a given pgm image, draws a line, and saves it to
-// another pgm image.
+// Sophia Xia
+// contains functions used to find and draw (trimmed) hough lines
+// reads an image, its hough image, and a threshold
+// using that information find the centers of the connected components in the hough inage
+// Convert the centers (rho theta coordinates) into cartesian coordinates and draw hough lines on the original image
+// If a binary edge image is provided, trimmed hough lines will be drawn on the original image instead
+// the modified image is then written to the output filename provided
+
 #include "image.h"
 #include <cstdio>
 #include <cmath>
@@ -351,6 +356,11 @@ vector<int> PolarToCartesian(int rows, int cols, double rho, double theta){
   return coords;
 }
 
+/**
+ * calculates and draws hough lines on image with rho theta coordinates
+ * @param an_image reference to the image that gets modified
+ * @param vector<int> vector of rho theta coordinate pairs {rho_0, theta_0, rho_1, theta_1 ... rho_n, theta_n}  
+ */
 void DrawHoughLines(Image *an_image, vector<double> houghlines){
   if (an_image == nullptr) abort();
   int rows = an_image->num_rows();
@@ -363,7 +373,15 @@ void DrawHoughLines(Image *an_image, vector<double> houghlines){
   }
 }
 
-void DrawTrimmedHoughLines(Image *an_image, Image *edge_image, vector<double> houghlines, int gap_tolerance, int min_length){
+/**
+ * calculates and draws trimmed hough lines on image with rho theta coordinates
+ * @param an_image reference to the image that gets modified
+ * @param an_image reference to the binary edge image
+ * @param vector<int> vector of rho theta coordinate pairs {rho_0, theta_0, rho_1, theta_1 ... rho_n, theta_n}  
+ * @param gap_tolerance how long a gap in the line segment can be
+ * @param min_length minimum length of the lines
+ */
+void DrawTrimmedHoughLines(Image *an_image, const Image *edge_image, vector<double> houghlines, int gap_tolerance, int min_length){
   if (an_image == nullptr) abort();
   int rows = an_image->num_rows();
   int cols = an_image->num_columns();
@@ -373,10 +391,8 @@ void DrawTrimmedHoughLines(Image *an_image, Image *edge_image, vector<double> ho
     vector<int> coords = PolarToCartesian(rows, cols, rho, theta);
     if(coords.size() == 4){
       vector<int> points = GetLinePoints(coords[0], coords[1], coords[2], coords[3]);
-      int x0 = -1;
-      int y0 = -1;
-      int x1 = -1;
-      int y1 = -1;
+      int x0 = -1; int y0 = -1;
+      int x1 = -1; int y1 = -1;
       int line_length = 0;
       int gap = 0;
       for(int j = 0; j < points.size(); j += 2){
@@ -392,8 +408,7 @@ void DrawTrimmedHoughLines(Image *an_image, Image *edge_image, vector<double> ho
               line_length += gap;
               gap = 0;
             }
-            x1 = points[j];
-            y1 = points[j+1];
+            x1 = points[j]; y1 = points[j+1];
             line_length +=1;
           }
         }
@@ -403,10 +418,8 @@ void DrawTrimmedHoughLines(Image *an_image, Image *edge_image, vector<double> ho
             if(line_length > min_length){
               DrawLine(x0, y0, x1, y1, 255, an_image);
             }
-            x0 = -1;
-            y0 = -1;
-            x1 = -1;
-            y1 = -1;
+            x0 = -1; y0 = -1;
+            x1 = -1; y1 = -1;
             line_length = 0;
             gap = 0;
           }
@@ -426,6 +439,7 @@ int main(int argc, char **argv){
   const string voting_array_file(argv[2]);
   const string threshold(argv[3]);
   const string output_file(argv[4]);
+  
   Image an_image;
   if (!ReadImage(input_file, &an_image)) {
     cout <<"Can't open file " << input_file << endl;
@@ -438,7 +452,7 @@ int main(int argc, char **argv){
     return 0;
   }
 
-  //DEEP COPY HOUGH_IMAGE INTO COMPONENTS
+  // Deep copy hough_image into components
   Image components;
   int rows = hough_image.num_rows();
   int cols = hough_image.num_columns();
@@ -450,14 +464,19 @@ int main(int argc, char **argv){
       components.SetPixel(r,c,color);
     }
   }
-  //THRESHOLD COMPONENTS
+  
   AboveThreshold(&components, stoi(threshold));
-  //GET CONNECTED COMPONENTS
+  
   ConnectedComponents(&components);
-
+  
   vector<double> hough_lines = FindHoughLines(&hough_image, &components);
-  if (argc == 5) DrawHoughLines(&an_image, hough_lines);
-  if(argc == 6){
+
+  // If Binary Edge filename not provided draw regular Hough lines
+  if (argc == 5)
+    DrawHoughLines(&an_image, hough_lines);
+  
+  // If Binary Edge filename provided draw trimmed Hough Lines
+  if (argc == 6){
     const string binary_edges(argv[5]);
     Image edge_image;
     if (!ReadImage(binary_edges, &edge_image)) {
@@ -466,7 +485,6 @@ int main(int argc, char **argv){
     }
     DrawTrimmedHoughLines(&an_image, &edge_image, hough_lines, 10, 50);
   }
-
 
   if (!WriteImage(output_file, an_image)){
     cout << "Can't write to file " << output_file << endl;
