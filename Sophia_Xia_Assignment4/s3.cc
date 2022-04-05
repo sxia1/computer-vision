@@ -28,19 +28,48 @@ vector<double> ReadDirectionFile(string filename){
   return directions;
 }
 
+vector<double> inverse_matrix(vector<double> matrix){
+  vector<double> inverse = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  for(int i = 0; i < 9; i++){
+    int row = i/3;
+    int col = i%3;
+    cout << "MINOR" << row << " " << col << endl;
+    vector<double> minor;
+    for(int j = 0; j < 3; j ++){
+      for(int k = 0; k < 3; k ++){
+        if(j!=row && k!=col) minor.push_back(matrix[j*3+k]);
+        if(j!=row && k!=col) cout << matrix[j*3+k] << " ";
+      }
+    }
+    cout << endl;
+    double minor_determinant = minor[0]*minor[3] - minor[1]*minor[2];
+    cout << minor_determinant << endl;
+    inverse[col*3+row] = minor_determinant;
+  }
+  double determinant = matrix[0]*inverse[0] - matrix[3]*inverse[1] + matrix[6]*inverse[2];
+  cout << determinant << endl;
+  determinant = matrix[0]*inverse[0] - matrix[1]*inverse[3] + matrix[2]*inverse[6];
+  cout << determinant << endl;
+  for(int i = 0; i < 9; i++){
+    inverse[i] = inverse[i]/determinant;
+    if(i%2 == 1) inverse[i] = -inverse[i];
+    cout << inverse[i] << " ";
+  }
+  cout << endl;
+  return inverse;
+}
+
 vector<double> NormalVector(int value_a, int value_b, int value_c, vector<double> directions){
   vector<double> normal;
-  for(int i = 0; i < 9; i +=3){
-    normal.push_back(directions[i]*value_a + directions[i+1]*value_b +directions[i+2]*value_c);
-    //cout << directions[i]*value_a + directions[i+1]*value_b +directions[i+1]*value_c << endl;
+  for(int i = 0; i < 9; i+=3){
+    double value = directions[i]*value_a + directions[i+1]*value_b +directions[i+2]*value_c;
+    normal.push_back(value);
   }
-  //cout << value_b << " " << value_c << endl;
   //cout << normal[0] << " " << normal[1] << " " << normal[2] << endl;
-  double magnitude = pow(pow(normal[0],2)+pow(normal[1],2)+1,0.5);
+  double magnitude = pow(pow(normal[0],2)+pow(normal[1],2)+pow(normal[2],2),0.5);
+  //cout << magnitude << endl;
   for(int i = 0; i < 3; i ++){
-    //cout << normal[i] << " ";
     normal[i] = 10*normal[i]/magnitude;
-    //cout << normal[i] << endl;
   }
   //cout << normal[0] << " " << normal[1] << " " << normal[2] << endl;
   return normal;
@@ -71,15 +100,21 @@ Image *DrawNeedleMap(vector<double> directions, Image *one, Image *two, Image *t
   if (one == nullptr || two == nullptr || three == nullptr) abort();
   int rows = one->num_rows();
   int cols = one->num_columns();
+  double magnitude_a = pow(pow(directions[0],2)+pow(directions[1],2)+pow(directions[2],2),0.5);
+  double magnitude_b = pow(pow(directions[3],2)+pow(directions[4],2)+pow(directions[5],2),0.5);
+  double magnitude_c = pow(pow(directions[6],2)+pow(directions[7],2)+pow(directions[8],2),0.5);
+  directions = inverse_matrix(directions);
   for(int r = step; r < rows; r+=step){
     for(int c = step; c < cols; c+=step){
       int one_value = one->GetPixel(r,c);
       int two_value = two->GetPixel(r,c);
       int three_value = three->GetPixel(r,c);
-      if(one_value > threshold and two_value > threshold and three_value > threshold){
+      if(!(one_value < threshold && two_value < threshold && three_value < threshold)){
+        //cout << one_value << " " << two_value << " " << three_value << endl;
         vector<double> normal = NormalVector(one_value,two_value,three_value, directions);
         DrawDot(one, r, c);
         DrawLine(r, c, r+floor(normal[0]), c+floor(normal[1]), 255, one);
+        //cout << normal[0] << " " << normal[1] << std::endl;
       }
     }
   }

@@ -46,18 +46,8 @@ vector<int> BrightestPixel(Image *an_image){
   centerx = centerx/area;
   centery = centery/area;
   cout << centerx << " " << centery << endl;
-  vector<int> coords = {centerx, centery};
+  vector<int> coords = {centerx, centery, max_brightness};
   return coords;
-}
-
-double PartialDerivativeSphere(int x, int y, int centerx, int centery, int radius, bool partialx){
-  double numerator = 0;
-  if(partialx) numerator = -(x-centerx);
-  else numerator = -(y-centery);
-  double denominator = pow((pow(radius,2) - pow((x-centerx),2) - pow((y-centery),2)),0.5);
-  double debug = pow(radius,2) - pow((x-centerx),2) - pow((y-centery),2);
-  cout << numerator << " " <<  debug << " " << denominator << endl;
-  return numerator/denominator;
 }
 
 vector<double> BrightestNormal(vector<int> parameters, Image *image){
@@ -65,14 +55,19 @@ vector<double> BrightestNormal(vector<int> parameters, Image *image){
   int centerx = parameters[0];
   int centery = parameters[1];
   int radius = parameters[2];
-  double p = -PartialDerivativeSphere(brightest_pixel[0], brightest_pixel[1], centerx, centery, radius, true);
-  double q = -PartialDerivativeSphere(brightest_pixel[0], brightest_pixel[1], centerx, centery, radius, false);
-  cout << p << " " << q << endl;
-  double magnitude = pow(pow(p,2)+pow(q,2)+1,0.5);
+  int dx = brightest_pixel[0]-centerx;
+  int dy = brightest_pixel[1]-centery;
+  int max_brightness = brightest_pixel[2];
+  double dz = pow(pow(radius, 2)-pow(dx,2)-pow(dy,2),.5);
+  double magnitude = pow(pow(dx,2)+pow(dy,2)+pow(dz,2),0.5);
+  //double magnitude = 1;
   vector<double> normal;
-  normal.push_back(p/magnitude);
-  normal.push_back(q/magnitude);
-  normal.push_back(1/magnitude);
+  normal.push_back(max_brightness*dx/magnitude);
+  normal.push_back(max_brightness*dy/magnitude);
+  normal.push_back(max_brightness*dz/magnitude);
+  //normal.push_back(dx);
+  //normal.push_back(dy);
+  //normal.push_back(dz);
   return normal;
 }
 

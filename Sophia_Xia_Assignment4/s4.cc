@@ -6,102 +6,131 @@
 #include <cstdio>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
 using namespace std;
 using namespace ComputerVisionProjects;
 
-/**
- * calculates whether or not the given coordinates are within the bounds of an image
- * @param an_image reference to the image
- * @param row x coordinate of the coordinate pair
- * @param col y coordinate of the coordinate pair
- * @return bool True if coordinate pair is within image bounds, else False 
- */
-bool inBounds(const Image *an_image, int row, int col){
-  int rows = an_image->num_rows();
-  int cols = an_image->num_columns();
-  return(row >= 0 && col >= 0 && row < rows && col < cols);
-}
-
-/**
- * calculates the 3x3 sobel x or y derivative of a given point in an image 
- * @param an_image reference to the image
- * @param x_deriv if True, function calculates the x deriv, if false function calculated the y deriv
- * @param row x coordinate of the coordinate pair
- * @param col y coordinate of the coordinate pair
- * @return int the x_derivative or y_derivative dependent on param x_deriv
- */
-int sobel_deriv(const Image *an_image, bool x_deriv, int row, int col){
-  std::vector<int> sobel3_gradient = {1,2,1,0,0,0,-1,-2,-1};
-  if(x_deriv) sobel3_gradient = {-1,0,1,-2,0,2,-1,0,1};
-  int deriv = 0;
-  if(inBounds(an_image, row, col)) deriv += an_image->GetPixel(row,col)*sobel3_gradient[8];
-  if(inBounds(an_image, row, col -1)) deriv += an_image->GetPixel(row,col-1)*sobel3_gradient[7];
-  if(inBounds(an_image, row, col -2)) deriv += an_image->GetPixel(row,col-2)*sobel3_gradient[6];
-  if(inBounds(an_image, row-1, col)) deriv += an_image->GetPixel(row-1,col)*sobel3_gradient[5];
-  if(inBounds(an_image, row-1, col -1)) deriv += an_image->GetPixel(row-1,col-1)*sobel3_gradient[4];
-  if(inBounds(an_image, row-1, col -2)) deriv += an_image->GetPixel(row-1,col-2)*sobel3_gradient[3];
-  if(inBounds(an_image, row-2, col)) deriv += an_image->GetPixel(row-2,col)*sobel3_gradient[2];
-  if(inBounds(an_image, row-2, col -1)) deriv += an_image->GetPixel(row-2,col-1)*sobel3_gradient[1];
-  if(inBounds(an_image, row-2, col -2)) deriv += an_image->GetPixel(row-2,col-2)*sobel3_gradient[0];
-  return deriv;
-}
-
-
-/**
- * modifies image by applying sobel 3x3 edge detection mask 
- * @param an_image reference to the image
- */
-void EdgeDetection(Image *an_image){
-  if (an_image == nullptr) abort();
-  int rows = an_image->num_rows();
-  int cols = an_image->num_columns();
-
-  std::vector<int> gradient_magnitude;
-
-  int gradient_magnitude_height = rows + 2;
-  int gradient_magnitude_width = cols + 2;
-
-  for(int r = 1; r < rows+1; r++){
-    for(int c = 1; c < cols+1; c++){
-      int gradient = 0;
-      gradient += pow(sobel_deriv(an_image, true, r, c),2);
-      gradient += pow(sobel_deriv(an_image, false, r, c),2);
-      gradient = pow(gradient,0.5);
-      gradient_magnitude.push_back(gradient);
-    }
+vector<double> ReadDirectionFile(string filename){
+  vector<double> directions;
+  ifstream database;
+  database.open(filename);
+  double x, y, z;
+  while(database >> x >> y >> z){
+    directions.push_back(x);
+    directions.push_back(y);
+    directions.push_back(z);
+    cout << x << " " << y << " " << z << endl;
   }
-  int ctr = 0;
+  database.close();
+  return directions;
+}
+
+vector<double> inverse_matrix(vector<double> matrix){
+  vector<double> inverse = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  for(int i = 0; i < 9; i++){
+    int row = i/3;
+    int col = i%3;
+    cout << "MINOR" << row << " " << col << endl;
+    vector<double> minor;
+    for(int j = 0; j < 3; j ++){
+      for(int k = 0; k < 3; k ++){
+        if(j!=row && k!=col) minor.push_back(matrix[j*3+k]);
+        if(j!=row && k!=col) cout << matrix[j*3+k] << " ";
+      }
+    }
+    cout << endl;
+    double minor_determinant = minor[0]*minor[3] - minor[1]*minor[2];
+    cout << minor_determinant << endl;
+    inverse[col*3+row] = minor_determinant;
+  }
+  double determinant = matrix[0]*inverse[0] - matrix[3]*inverse[1] + matrix[6]*inverse[2];
+  cout << determinant << endl;
+  determinant = matrix[0]*inverse[0] - matrix[1]*inverse[3] + matrix[2]*inverse[6];
+  cout << determinant << endl;
+  for(int i = 0; i < 9; i++){
+    inverse[i] = inverse[i]/determinant;
+    if(i%2 == 1) inverse[i] = -inverse[i];
+    cout << inverse[i] << " ";
+  }
+  cout << endl;
+  return inverse;
+}
+
+double NormalMagnitude(int value_a, int value_b, int value_c, vector<double> directions){
+  vector<double> normal;
+  for(int i = 0; i < 9; i+=3){
+    double value = directions[i]*value_a + directions[i+1]*value_b +directions[i+2]*value_c;
+    normal.push_back(value);
+  }
+  double magnitude = pow(pow(normal[0],2)+pow(normal[1],2)+pow(normal[2],2),0.5);
+  return magnitude;
+}
+
+Image *Albedo(vector<double> directions, Image *one, Image *two, Image *three, int threshold){
+  if (one == nullptr || two == nullptr || three == nullptr) abort();
+  int rows = one->num_rows();
+  int cols = one->num_columns();
+  directions = inverse_matrix(directions);
+  double max_magnitude = 0.0;
+  vector<double> magnitudes;
   for(int r = 0; r < rows; r++){
     for(int c = 0; c < cols; c++){
-      int gradient = gradient_magnitude.at(ctr);
-      ctr++;
-      an_image->SetPixel(r, c, gradient);
+      int one_value = one->GetPixel(r,c);
+      int two_value = two->GetPixel(r,c);
+      int three_value = three->GetPixel(r,c);
+      if(one_value > threshold && two_value > threshold && three_value > threshold){
+        double magnitude = NormalMagnitude(one_value,two_value,three_value, directions);
+        max_magnitude = max(max_magnitude, magnitude);
+        magnitudes.push_back(magnitude);
+      }
+      else magnitudes.push_back(0);
     }
   }
+  for(int r = 0; r < rows; r++){
+    for(int c = 0; c < cols; c++){
+      double scaled = 255*magnitudes[r*(cols)+c]/max_magnitude;
+      one->SetPixel(r,c,floor(scaled));
+    }
+  }
+  return one;
 }
 
 int main(int argc, char **argv){
-  
-  if (argc!=3) {
-    printf("Usage: %s input_gray_image.pgm output_gray_image_filename.pgm\n", argv[0]);
+  if (argc!=7) {
+    printf("Usage: %s input_directions.txt image1.pgm image2.pgm image3.pgm threshold output_albedo_image_filename.pgm\n", argv[0]);
     return 0;
   }
-  const string input_file(argv[1]);
-  const string output_file(argv[2]);
+  const string input_directions(argv[1]);
+  const string input_image_one(argv[2]);
+  const string input_image_two(argv[3]);
+  const string input_image_three(argv[4]);
+  const string threshold(argv[5]);
+  const string output_image(argv[6]);
 
-  Image an_image;
-  if (!ReadImage(input_file, &an_image)) {
-    cout <<"Can't open file " << input_file << endl;
+  Image image_one;
+  if (!ReadImage(input_image_one, &image_one)) {
+    cout <<"Can't open file " << input_image_one << endl;
+    return 0;
+  }
+  Image image_two;
+  if (!ReadImage(input_image_two, &image_two)) {
+    cout <<"Can't open file " << input_image_two << endl;
+    return 0;
+  }
+  Image image_three;
+  if (!ReadImage(input_image_three, &image_three)) {
+    cout <<"Can't open file " << input_image_three << endl;
     return 0;
   }
 
-  EdgeDetection(&an_image);
+  vector<double> directions = ReadDirectionFile(input_directions);
+  Image *albedo_image = Albedo(directions, &image_one, &image_two, &image_three, stoi(threshold));
 
-  if (!WriteImage(output_file, an_image)){
-    cout << "Can't write to file " << output_file << endl;
+  if (!WriteImage(output_image, *albedo_image)){
+    cout << "Can't write to file " << output_image << endl;
     return 0;
   }
 }
