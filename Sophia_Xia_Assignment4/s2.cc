@@ -1,7 +1,9 @@
 // Sophia Xia
-// contains functions for applying a 3x3 sobel mask on an image
-// Reads a given pgm image, and applies the sobel mask for edge detection
-// The modified image is then saved to a new pgm image under the given filename
+// contains functions to calculate light source direction on a sphere
+// reads sphere parameters from a file and uses that to calculate the vector
+// the brightest pixel on the sphere to its center
+// this is done for 3 different sphere images under different lighting conditions
+// the vectors are then all written to a textfile
 #include "image.h"
 #include <cstdio>
 #include <cmath>
@@ -13,6 +15,11 @@
 using namespace std;
 using namespace ComputerVisionProjects;
 
+/**
+ * Reads parameters from a file into a vector
+ * @param filename file should consist of 3 space separated numbers
+ * @return vector<int> a vector of length three containing centerx, centery, radius
+ */
 vector<int> ReadParameterFile(string filename){
   ifstream database;
   database.open(filename);
@@ -23,7 +30,12 @@ vector<int> ReadParameterFile(string filename){
   return parameters;
 }
 
-vector<int> BrightestPixel(Image *an_image){
+/**
+ * finds the coordinates and value of the brightest pixel in an image
+ * @param an_image reference to the image that should depict a sphere
+ * @return vector<int> vector of length 3 containing x coordinate, y coordinate, and pixel value
+ */
+vector<int> BrightestPixel(const Image *an_image){
   if (an_image == nullptr) abort();
   int rows = an_image->num_rows();
   int cols = an_image->num_columns();
@@ -50,7 +62,13 @@ vector<int> BrightestPixel(Image *an_image){
   return coords;
 }
 
-vector<double> BrightestNormal(vector<int> parameters, Image *image){
+/**
+ * finds the vector from the brightest pixel to the center of the sphere
+ * @param parameters a vector containing sphere x coordinate, y coordinate, and radius
+ * @param image reference to the image that should depict a sphere
+ * @return vector<double> contains x y and z components of the vector scaled to pixel brightness
+ */
+vector<double> BrightestNormal(vector<int> parameters, const Image *image){
   vector<int> brightest_pixel = BrightestPixel(image);
   int centerx = parameters[0];
   int centery = parameters[1];
@@ -60,14 +78,10 @@ vector<double> BrightestNormal(vector<int> parameters, Image *image){
   int max_brightness = brightest_pixel[2];
   double dz = pow(pow(radius, 2)-pow(dx,2)-pow(dy,2),.5);
   double magnitude = pow(pow(dx,2)+pow(dy,2)+pow(dz,2),0.5);
-  //double magnitude = 1;
   vector<double> normal;
   normal.push_back(max_brightness*dx/magnitude);
   normal.push_back(max_brightness*dy/magnitude);
   normal.push_back(max_brightness*dz/magnitude);
-  //normal.push_back(dx);
-  //normal.push_back(dy);
-  //normal.push_back(dz);
   return normal;
 }
 
@@ -98,12 +112,13 @@ int main(int argc, char **argv){
     cout <<"Can't open file " << input_image_three << endl;
     return 0;
   }
-
-  vector<int> parameters = ReadParameterFile(input_parameters_file);  
+  // READ SPHERE PARAMETERS FROM FILE
+  vector<int> parameters = ReadParameterFile(input_parameters_file);
+  // CALCULATE LIGHT SOURCE DIRECTIONS ON SPHERE
   vector<double> normal_one = BrightestNormal(parameters, &image_one);
   vector<double> normal_two = BrightestNormal(parameters, &image_two);
   vector<double> normal_three = BrightestNormal(parameters, &image_three);
-
+  // WRITE LIGHT SOURCE DIRECTIONS TO FILE
   ofstream database;
   database.open(output_file);
   database << normal_one[0] << " " << normal_one[1] << " " << normal_one[2] << "\n";

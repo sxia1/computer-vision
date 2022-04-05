@@ -1,7 +1,8 @@
 // Sophia Xia
-// contains functions for applying a 3x3 sobel mask on an image
-// Reads a given pgm image, and applies the sobel mask for edge detection
-// The modified image is then saved to a new pgm image under the given filename
+// contains functions necessary to calculate and draw surface normals of an object
+// reads the light source directions from a file and uses that information to
+// calculate and draw the normals at the specified intervals from three images
+// the image is then written to the specified file
 #include "image.h"
 #include <cstdio>
 #include <cmath>
@@ -13,6 +14,12 @@
 using namespace std;
 using namespace ComputerVisionProjects;
 
+/**
+ * Reads light source directions from a file into a vector
+ * @param filename should contain 3 newline separated light source directions
+ *        containing space separated x, y, z components
+ * @return vector<double> a vector of length 9 containing the directions
+ */
 vector<double> ReadDirectionFile(string filename){
   vector<double> directions;
   ifstream database;
@@ -28,6 +35,11 @@ vector<double> ReadDirectionFile(string filename){
   return directions;
 }
 
+/**
+ * Calculates the inverse of a 3 by 3 matrix
+ * @param matrix a vector of length 9
+ * @return vector<double> vector of length 9 containing the inverse
+ */
 vector<double> inverse_matrix(vector<double> matrix){
   vector<double> inverse = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   for(int i = 0; i < 9; i++){
@@ -59,10 +71,18 @@ vector<double> inverse_matrix(vector<double> matrix){
   return inverse;
 }
 
-vector<double> NormalVector(int value_a, int value_b, int value_c, vector<double> directions){
+/**
+ * calculates the normal of a pixel
+ * @param value_a the pixel value at the pixel from the first image
+ * @param value_b the pixel value at the pixel from the second image
+ * @param value_c the pixel value at the pixel from the third image
+ * @param directions a vector of length 9 that contains the inverse light source direction matrix
+ * @return vector<double> a vector of length 3 that contains the x, y, z components of the normal scaled to 10
+ */
+vector<double> NormalVector(int value_a, int value_b, int value_c, vector<double> inverse_directions){
   vector<double> normal;
   for(int i = 0; i < 9; i+=3){
-    double value = directions[i]*value_a + directions[i+1]*value_b +directions[i+2]*value_c;
+    double value = inverse_directions[i]*value_a + inverse_directions[i+1]*value_b +inverse_directions[i+2]*value_c;
     normal.push_back(value);
   }
   //cout << normal[0] << " " << normal[1] << " " << normal[2] << endl;
@@ -95,14 +115,20 @@ void DrawDot(Image *an_image, int x, int y){
   if(x+1 < rows && y+1 < cols) an_image->SetPixel(x+1,y+1, 0);
 }
 
-
-Image *DrawNeedleMap(vector<double> directions, Image *one, Image *two, Image *three, int step, int threshold){
+/**
+ * calculates and draws the normals on the image
+ * @param directions a vector of size 9 that contains 3 light source directions
+ * @param one the first image that gets drawn on
+ * @param two the second image
+ * @param three the third image
+ * @param step the interval to calculate and draw normals on the image
+ * @param threshold
+ * @return *Image reference to the modified first image
+ */
+Image *DrawNeedleMap(vector<double> directions, Image *one, const Image *two, const Image *three, int step, int threshold){
   if (one == nullptr || two == nullptr || three == nullptr) abort();
   int rows = one->num_rows();
   int cols = one->num_columns();
-  double magnitude_a = pow(pow(directions[0],2)+pow(directions[1],2)+pow(directions[2],2),0.5);
-  double magnitude_b = pow(pow(directions[3],2)+pow(directions[4],2)+pow(directions[5],2),0.5);
-  double magnitude_c = pow(pow(directions[6],2)+pow(directions[7],2)+pow(directions[8],2),0.5);
   directions = inverse_matrix(directions);
   for(int r = step; r < rows; r+=step){
     for(int c = step; c < cols; c+=step){

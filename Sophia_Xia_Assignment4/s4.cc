@@ -1,7 +1,8 @@
 // Sophia Xia
-// contains functions for applying a 3x3 sobel mask on an image
-// Reads a given pgm image, and applies the sobel mask for edge detection
-// The modified image is then saved to a new pgm image under the given filename
+// contains functions necessary to calculate surface normal magnitudes of an object
+// reads the light source directions from a file and uses that information to
+// calculate the normal magnitude and draw the Albedo image from three images
+// the image is then written to the specified file
 #include "image.h"
 #include <cstdio>
 #include <cmath>
@@ -13,6 +14,12 @@
 using namespace std;
 using namespace ComputerVisionProjects;
 
+/**
+ * Reads light source directions from a file into a vector
+ * @param filename should contain 3 newline separated light source directions
+ *        containing space separated x, y, z components
+ * @return vector<double> a vector of length 9 containing the directions
+ */
 vector<double> ReadDirectionFile(string filename){
   vector<double> directions;
   ifstream database;
@@ -28,6 +35,11 @@ vector<double> ReadDirectionFile(string filename){
   return directions;
 }
 
+/**
+ * Calculates the inverse of a 3 by 3 matrix
+ * @param matrix a vector of length 9
+ * @return vector<double> vector of length 9 containing the inverse
+ */
 vector<double> inverse_matrix(vector<double> matrix){
   vector<double> inverse = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   for(int i = 0; i < 9; i++){
@@ -59,6 +71,14 @@ vector<double> inverse_matrix(vector<double> matrix){
   return inverse;
 }
 
+/**
+ * calculates the normal magnitude of a pixel
+ * @param value_a the pixel value at the pixel from the first image
+ * @param value_b the pixel value at the pixel from the second image
+ * @param value_c the pixel value at the pixel from the third image
+ * @param directions a vector of length 9 that contains the inverse light source direction matrix
+ * @return double the magnitude of the normal vector
+ */
 double NormalMagnitude(int value_a, int value_b, int value_c, vector<double> directions){
   vector<double> normal;
   for(int i = 0; i < 9; i+=3){
@@ -69,7 +89,17 @@ double NormalMagnitude(int value_a, int value_b, int value_c, vector<double> dir
   return magnitude;
 }
 
-Image *Albedo(vector<double> directions, Image *one, Image *two, Image *three, int threshold){
+
+/**
+ * calculates and draws the Albedo on the image
+ * @param directions a vector of size 9 that contains 3 light source directions
+ * @param one the first image that gets drawn on
+ * @param two the second image
+ * @param three the third image
+ * @param threshold
+ * @return *Image reference to the modified first image
+ */
+Image *Albedo(vector<double> directions, Image *one, const Image *two, const Image *three, int threshold){
   if (one == nullptr || two == nullptr || three == nullptr) abort();
   int rows = one->num_rows();
   int cols = one->num_columns();

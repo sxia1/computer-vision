@@ -1,7 +1,7 @@
 // Sophia Xia
-// contains functions for applying a 3x3 sobel mask on an image
-// Reads a given pgm image, and applies the sobel mask for edge detection
-// The modified image is then saved to a new pgm image under the given filename
+// Reads a given pgm image (expecting sphere in image), thresholds it and calculates
+// the center coordinates and radius of the sphere
+// the data calculated is then written to a textfile
 #include "image.h"
 #include <cstdio>
 #include <cmath>
@@ -13,7 +13,13 @@
 using namespace std;
 using namespace ComputerVisionProjects;
 
-void DetectSphere(Image *an_image, int threshold, string filename){
+/**
+ * thresholds an image and calculates the center coordinates and radius of the sphere
+ * @param an_image reference to the image that should depict a sphere
+ * @param threshold 
+ * @param filename the name of the file the data should be written to
+ */
+void DetectSphere(const Image *an_image, int threshold, string filename){
   if (an_image == nullptr) abort();
   int rows = an_image->num_rows();
   int cols = an_image->num_columns();
