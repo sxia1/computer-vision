@@ -57,7 +57,6 @@ vector<int> BrightestPixel(const Image *an_image){
   }
   centerx = centerx/area;
   centery = centery/area;
-  cout << centerx << " " << centery << endl;
   vector<int> coords = {centerx, centery, max_brightness};
   return coords;
 }

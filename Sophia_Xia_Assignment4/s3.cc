@@ -74,16 +74,12 @@ vector<double> NormalVector(int value_a, int value_b, int value_c, vector<double
   vector<double> normal;
   for(int i = 0; i < 9; i+=3){
     double value = inverse_directions[i]*value_a + inverse_directions[i+1]*value_b +inverse_directions[i+2]*value_c;
-    //if(i == 0)cout << value_a << "*" << inverse_directions[i] << "+" << value_b << "*" << inverse_directions[i+1] << "+" << value_c << "*" << inverse_directions[i+2] << "=" << value << endl;
     normal.push_back(value);
   }
-  //cout << normal[0] << " " << normal[1] << " " << normal[2] << endl;
   double magnitude = pow(pow(normal[0],2)+pow(normal[1],2)+pow(normal[2],2),0.5);
-  //cout << magnitude << endl;
   for(int i = 0; i < 3; i ++){
     normal[i] = 10*normal[i]/magnitude;
   }
-  cout << normal[0] << " " << normal[1] << " " << normal[2] << endl;
   return normal;
 }
 
@@ -128,17 +124,9 @@ Image *DrawNeedleMap(vector<double> directions, Image *one, const Image *two, co
       int two_value = two->GetPixel(r,c);
       int three_value = three->GetPixel(r,c);
       if(one_value > threshold && two_value > threshold && three_value > threshold){
-        //cout << one_value << " " << two_value << " " << three_value << endl;
         vector<double> normal = NormalVector(one_value,two_value,three_value, directions);
         DrawDot(one, r, c);
         DrawLine(r, c, r+floor(normal[0]), c+floor(normal[1]), 255, one);
-        cout << r << " " << c << " ";
-        cout << normal[0] << " " << normal[1] << " ";
-        cout << r+normal[0] << " " << c+normal[1] << endl;
-        //cout << normal[0] << " " << normal[1] << std::endl;
-      }
-      else{
-        cout << 0 << endl;
       }
     }
   }

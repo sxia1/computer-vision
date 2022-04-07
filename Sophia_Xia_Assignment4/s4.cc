@@ -29,7 +29,6 @@ vector<double> ReadDirectionFile(string filename){
     directions.push_back(x);
     directions.push_back(y);
     directions.push_back(z);
-    cout << x << " " << y << " " << z << endl;
   }
   database.close();
   return directions;
@@ -45,29 +44,21 @@ vector<double> inverse_matrix(vector<double> matrix){
   for(int i = 0; i < 9; i++){
     int row = i/3;
     int col = i%3;
-    cout << "MINOR" << row << " " << col << endl;
     vector<double> minor;
     for(int j = 0; j < 3; j ++){
       for(int k = 0; k < 3; k ++){
         if(j!=row && k!=col) minor.push_back(matrix[j*3+k]);
-        if(j!=row && k!=col) cout << matrix[j*3+k] << " ";
       }
     }
-    cout << endl;
     double minor_determinant = minor[0]*minor[3] - minor[1]*minor[2];
-    cout << minor_determinant << endl;
     inverse[col*3+row] = minor_determinant;
   }
   double determinant = matrix[0]*inverse[0] - matrix[3]*inverse[1] + matrix[6]*inverse[2];
-  cout << determinant << endl;
   determinant = matrix[0]*inverse[0] - matrix[1]*inverse[3] + matrix[2]*inverse[6];
-  cout << determinant << endl;
   for(int i = 0; i < 9; i++){
     inverse[i] = inverse[i]/determinant;
     if(i%2 == 1) inverse[i] = -inverse[i];
-    cout << inverse[i] << " ";
   }
-  cout << endl;
   return inverse;
 }
 
